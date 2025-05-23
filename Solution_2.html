@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Memory Lane</title>
+  <style>
+    body {
+      font-family: 'Helvetica', sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .memory-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .timeline {
+      position: relative;
+      padding-left: 50px;
+      margin-top: 40px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #4a90e2;
+    }
+    .memory {
+      position: relative;
+      margin-bottom: 30px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    .memory.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .memory::before {
+      content: '';
+      position: absolute;
+      left: -40px;
+      top: 15px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #4a90e2;
+    }
+    .memory-date {
+      color: #4a90e2;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .memory-content {
+      display: flex;
+    }
+    .memory-image {
+      width: 100px;
+      height: 100px;
+      background: #ddd;
+      border-radius: 5px;
+      margin-right: 15px;
+      object-fit: cover;
+    }
+    .add-memory {
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.3s;
+    }
+    .add-memory:hover {
+      background: #3a7bc8;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 400px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .btn {
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .btn-primary {
+      background: #4a90e2;
+      color: white;
+      border: none;
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="memory-container">
+    <h1>Memory Lane</h1>
+    <p>Våra gemensamma minnen</p>
+    
+    <div class="timeline" id="timeline">
+      <!-- Minnen läggs till här via JavaScript -->
+    </div>
+    
+    <button class="add-memory" id="addMemoryBtn">+ Lägg till minne</button>
+  </div>
+  
+  <!-- Modal för att lägga till minne -->
+  <div class="modal" id="memoryModal">
+    <div class="modal-content">
+      <h2>Lägg till minne</h2>
+      <form id="memoryForm">
+        <div class="form-group">
+          <label for="memoryTitle">Titel</label>
+          <input type="text" id="memoryTitle" required>
+        </div>
+        <div class="form-group">
+          <label for="memoryDate">Datum</label>
+          <input type="date" id="memoryDate" required>
+        </div>
+        <div class="form-group">
+          <label for="memoryDescription">Beskrivning</label>
+          <textarea id="memoryDescription" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="memoryImage">Bild (URL)</label>
+          <input type="url" id="memoryImage" placeholder="https://example.com/image.jpg">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="cancelBtn">Avbryt</button>
+          <button type="submit" class="btn btn-primary">Spara</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Initiala minnen
+    const memories = [
+      {
+        id: 1,
+        title: "Semester i Grekland",
+        date: "2023-05-15",
+        description: "Den underbara stranden vi upptäckte tillsammans. Alex lade till ett röstmeddelande: 'Kommer du ihåg solnedgången?'",
+        image: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+      },
+      {
+        id: 2,
+        title: "Första julen på distans",
+        date: "2022-12-24",
+        description: "Vi tittade på 'Home Alone' samtidigt med videoljud länkat.",
+        image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+      }
+    ];
+    
+    const timeline = document.getElementById('timeline');
+    const addMemoryBtn = document.getElementById('addMemoryBtn');
+    const memoryModal = document.getElementById('memoryModal');
+    const memoryForm = document.getElementById('memoryForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+    
+    // Visa minnen
+    function renderMemories() {
+      timeline.innerHTML = '';
+      
+      // Sortera minnen efter datum (nyast först)
+      const sortedMemories = [...memories].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      sortedMemories.forEach(memory => {
+        const memoryElement = document.createElement('div');
+        memoryElement.className = 'memory';
+        memoryElement.innerHTML = `
+          <div class="memory-date">${formatDate(memory.date)}</div>
+          <div class="memory-content">
+            <img class="memory-image" src="${memory.image || 'https://via.placeholder.com/100'}" alt="${memory.title}">
+            <div>
+              <h3>${memory.title}</h3>
+              <p>${memory.description}</p>
+            </div>
+          </div>
+        `;
+        
+        timeline.appendChild(memoryElement);
+        
+        // Animerar in minnet
+        setTimeout(() => {
+          memoryElement.classList.add('visible');
+        }, 100);
+      });
+    }
+    
+    // Formatera datum
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString('sv-SE', options);
+    }
+    
+    // Visa modal
+    addMemoryBtn.addEventListener('click', () => {
+      memoryModal.style.display = 'flex';
+      document.getElementById('memoryDate').valueAsDate = new Date();
+    });
+    
+    // Dölj modal
+    cancelBtn.addEventListener('click', () => {
+      memoryModal.style.display = 'none';
+    });
+    
+    // Hantera formulär
+    memoryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const newMemory = {
+        id: memories.length + 1,
+        title: document.getElementById('memoryTitle').value,
+        date: document.getElementById('memoryDate').value,
+        description: document.getElementById('memoryDescription').value,
+        image: document.getElementById('memoryImage').value
+      };
+      
+      memories.push(newMemory);
+      renderMemories();
+      memoryModal.style.display = 'none';
+      memoryForm.reset();
+    });
+    
+    // Stäng modal vid klick utanför
+    memoryModal.addEventListener('click', (e) => {
+      if (e.target === memoryModal) {
+        memoryModal.style.display = 'none';
+      }
+    });
+    
+    // Initial rendering
+    renderMemories();
+    
+    // Animerar in befintliga minnen
+    setTimeout(() => {
+      document.querySelectorAll('.memory').forEach((mem, index) => {
+        setTimeout(() => {
+          mem.classList.add('visible');
+        }, index * 200);
+      });
+    }, 500);
+  </script>
+</body>
+</html>
